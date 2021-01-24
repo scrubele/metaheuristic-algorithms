@@ -1,26 +1,13 @@
-package com.scrubele;
+package main.java.com.scrubele.utilities;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.Stroke;
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-
-import javax.imageio.ImageIO;
+import java.util.*;
 
 /**
  * Simple implementation of plot. Minimal features, no dependencies besides standard libraries.
@@ -30,21 +17,19 @@ import javax.imageio.ImageIO;
  */
 public class Plot {
 
-    public enum Line { NONE, SOLID, DASHED };
-    public enum Marker { NONE, CIRCLE, SQUARE, DIAMOND, COLUMN, BAR };
-    public enum AxisFormat { NUMBER, NUMBER_KGM, NUMBER_INT, TIME_HM, TIME_HMS, DATE, DATETIME_HM, DATETIME_HMS }
-    public enum LegendFormat { NONE, TOP, RIGHT, BOTTOM }
-
-    private enum HorizAlign { LEFT, CENTER, RIGHT }
-    private enum VertAlign { TOP, CENTER, BOTTOM }
-
+    private final Rectangle boundRect;
+    private final PlotArea plotArea;
+    private final Map<String, Axis> xAxes = new HashMap<String, Axis>(3);
+    private final Map<String, Axis> yAxes = new HashMap<String, Axis>(3);
+    private final Map<String, DataSeries> dataSeriesMap = new LinkedHashMap<String, DataSeries>(5);
     private PlotOptions opts = new PlotOptions();
 
-    private Rectangle boundRect;
-    private PlotArea plotArea;
-    private Map<String, Axis> xAxes = new HashMap<String, Axis>(3);
-    private Map<String, Axis> yAxes = new HashMap<String, Axis>(3);
-    private Map<String, DataSeries> dataSeriesMap = new LinkedHashMap<String, DataSeries>(5);
+    private Plot(PlotOptions opts) {
+        if (opts != null)
+            this.opts = opts;
+        boundRect = new Rectangle(0, 0, this.opts.width, this.opts.height);
+        plotArea = new PlotArea();
+    }
 
     public static Plot plot(PlotOptions opts) {
         return new Plot(opts);
@@ -54,8 +39,180 @@ public class Plot {
         return new PlotOptions();
     }
 
+    public static AxisOptions axisOpts() {
+        return new AxisOptions();
+    }
+
+    public static DataSeriesOptions seriesOpts() {
+        return new DataSeriesOptions();
+    }
+
+    public static Data data() {
+        return new Data();
+    }
+
+    private static void drawLabel(Graphics2D g, String s, int x, int y, HorizAlign hAlign, VertAlign vAlign) {
+        FontMetrics fm = g.getFontMetrics();
+        Rectangle2D rect = fm.getStringBounds(s, g);
+
+        // by default align by left
+        if (hAlign == HorizAlign.RIGHT)
+            x -= rect.getWidth();
+        else if (hAlign == HorizAlign.CENTER)
+            x -= rect.getWidth() / 2;
+
+        // by default align by bottom
+        if (vAlign == VertAlign.TOP)
+            y += rect.getHeight();
+        else if (vAlign == VertAlign.CENTER)
+            y += rect.getHeight() / 2;
+
+        g.drawString(s, x, y);
+    }
+
+    public static String formatDouble(double d, AxisFormat format) {
+        switch (format) {
+            case TIME_HM:
+                return String.format("%tR", new java.util.Date((long) d));
+            case TIME_HMS:
+                return String.format("%tT", new java.util.Date((long) d));
+            case DATE:
+                return String.format("%tF", new java.util.Date((long) d));
+            case DATETIME_HM:
+                return String.format("%tF %1$tR", new java.util.Date((long) d));
+            case DATETIME_HMS:
+                return String.format("%tF %1$tT", new java.util.Date((long) d));
+            case NUMBER_KGM:
+                return formatDoubleAsNumber(d, true);
+            case NUMBER_INT:
+                return Integer.toString((int) d);
+            default:
+                return formatDoubleAsNumber(d, false);
+        }
+    }
+
+    private static String formatDoubleAsNumber(double d, boolean useKGM) {
+        if (useKGM && d > 1000 && d < 1000000000000l) {
+            long[] numbers = new long[]{1000l, 1000000l, 1000000000l};
+            char[] suffix = new char[]{'K', 'M', 'G'};
+
+            int i = 0;
+            double r = 0;
+            for (long number : numbers) {
+                r = d / number;
+                if (r < 1000)
+                    break;
+                i++;
+            }
+            if (i == suffix.length)
+                i--;
+            return String.format("%1$,.2f%2$c", r, suffix[i]);
+        } else
+            return String.format("%1$.3G", d);
+    }
+
+    private static double x2x(double x, Range xr1, Range xr2) {
+        return xr1.diff == 0 ? xr2.min + xr2.diff / 2 : xr2.min + (x - xr1.min) / xr1.diff * xr2.diff;
+    }
+
+    // y axis is reverse in Graphics
+    private static double y2y(double x, Range xr1, Range xr2) {
+        return xr1.diff == 0 ? xr2.min + xr2.diff / 2 : xr2.max - (x - xr1.min) / xr1.diff * xr2.diff;
+    }
+
+    private static int toInt(double d) {
+        return (int) Math.round(d);
+    }
+
+    public PlotOptions opts() {
+        return opts;
+    }
+
+    public Plot xAxis(String name, AxisOptions opts) {
+        xAxes.put(name, new Axis(name, opts));
+        return this;
+    }
+
+    public Plot yAxis(String name, AxisOptions opts) {
+        yAxes.put(name, new Axis(name, opts));
+        return this;
+    }
+
+    public Plot series(String name, Data data, DataSeriesOptions opts) {
+        DataSeries series = dataSeriesMap.get(name);
+        if (opts != null)
+            opts.setPlot(this);
+        if (series == null) {
+            series = new DataSeries(name, data, opts);
+            dataSeriesMap.put(name, series);
+        } else {
+            series.data = data;
+            series.opts = opts;
+        }
+        return this;
+    }
+
+    public Plot series(String name, DataSeriesOptions opts) {
+        DataSeries series = dataSeriesMap.get(name);
+        if (opts != null)
+            opts.setPlot(this);
+        if (series != null)
+            series.opts = opts;
+        return this;
+    }
+
+    private void calc(Graphics2D g) {
+        plotArea.calc(g);
+    }
+
+    private void clear() {
+        plotArea.clear();
+        for (DataSeries series : dataSeriesMap.values())
+            series.clear();
+    }
+
+    private BufferedImage draw() {
+        BufferedImage image = new BufferedImage(opts.width, opts.height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            calc(g);
+            drawBackground(g);
+            plotArea.draw(g);
+            for (DataSeries series : dataSeriesMap.values())
+                series.draw(g);
+            return image;
+        } finally {
+            g.dispose();
+        }
+    }
+
+    private void drawBackground(Graphics2D g) {
+        g.setColor(opts.backgroundColor);
+        g.fillRect(0, 0, opts.width, opts.height);
+    }
+
+    public void save(String fileName, String type) throws IOException {
+        clear();
+        BufferedImage bi = draw();
+        File outputFile = new File(fileName + "." + type);
+        ImageIO.write(bi, type, outputFile);
+    }
+
+    public enum Line {NONE, SOLID, DASHED}
+
+    public enum Marker {NONE, CIRCLE, SQUARE, DIAMOND, COLUMN, BAR}
+
+    public enum AxisFormat {NUMBER, NUMBER_KGM, NUMBER_INT, TIME_HM, TIME_HMS, DATE, DATETIME_HM, DATETIME_HMS}
+
+    public enum LegendFormat {NONE, TOP, RIGHT, BOTTOM}
+
+    private enum HorizAlign {LEFT, CENTER, RIGHT}
+
+    private enum VertAlign {TOP, CENTER, BOTTOM}
+
     public static class PlotOptions {
 
+        private final int defaultLegendSignSize = 10;
         private String title = "";
         private int width = 800;
         private int height = 600;
@@ -65,17 +222,17 @@ public class Plot {
         private int padding = 10; // padding for the entire image
         private int plotPadding = 5; // padding for plot area (to have min and max values padded)
         private int labelPadding = 10;
-        private int defaultLegendSignSize = 10;
         private int legendSignSize = 10;
-        private Point grids = new Point(10 ,10); // grid lines by x and y
+        private Point grids = new Point(10, 10); // grid lines by x and y
         private Color gridColor = Color.GRAY;
         private Stroke gridStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
-                BasicStroke.JOIN_MITER, 10.0f, new float[] { 5.0f }, 0.0f);
+                BasicStroke.JOIN_MITER, 10.0f, new float[]{5.0f}, 0.0f);
         private int tickSize = 5;
         private Font labelFont = new Font("Arial", 0, 12);
         private LegendFormat legend = LegendFormat.NONE;
 
-        private PlotOptions() {}
+        private PlotOptions() {
+        }
 
         public PlotOptions title(String title) {
             this.title = title;
@@ -154,106 +311,211 @@ public class Plot {
 
     }
 
-    private Plot(PlotOptions opts) {
-        if (opts != null)
-            this.opts = opts;
-        boundRect = new Rectangle(0, 0, this.opts.width, this.opts.height);
-        plotArea = new PlotArea();
-    }
+    public static class Range {
 
-    public PlotOptions opts() {
-        return opts;
-    }
+        private double min;
+        private double max;
+        private double diff;
 
-    public Plot xAxis(String name, AxisOptions opts) {
-        xAxes.put(name, new Axis(name, opts));
-        return this;
-    }
-
-    public Plot yAxis(String name, AxisOptions opts) {
-        yAxes.put(name, new Axis(name, opts));
-        return this;
-    }
-
-    public Plot series(String name, Data data, DataSeriesOptions opts) {
-        DataSeries series = dataSeriesMap.get(name);
-        if (opts != null)
-            opts.setPlot(this);
-        if (series == null) {
-            series = new DataSeries(name, data, opts);
-            dataSeriesMap.put(name, series);
-        } else {
-            series.data = data;
-            series.opts = opts;
+        public Range(double min, double max) {
+            this.min = min;
+            this.max = max;
+            this.diff = max - min;
         }
-        return this;
-    }
 
-    public Plot series(String name, DataSeriesOptions opts) {
-        DataSeries series = dataSeriesMap.get(name);
-        if (opts != null)
-            opts.setPlot(this);
-        if (series != null)
-            series.opts = opts;
-        return this;
-    }
-
-    private void calc(Graphics2D g) {
-        plotArea.calc(g);
-    }
-
-    private void clear() {
-        plotArea.clear();
-        for (DataSeries series : dataSeriesMap.values())
-            series.clear();
-    }
-
-    private BufferedImage draw() {
-        BufferedImage image = new BufferedImage(opts.width, opts.height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = image.createGraphics();
-        try {
-            calc(g);
-            drawBackground(g);
-            plotArea.draw(g);
-            for (DataSeries series : dataSeriesMap.values())
-                series.draw(g);
-            return image;
-        } finally {
-            g.dispose();
+        public Range(Range range) {
+            this.min = range.min;
+            this.max = range.max;
+            this.diff = max - min;
         }
+
+        public void setMin(double min) {
+            this.min = min;
+            this.diff = max - min;
+        }
+
+        public void setMax(double max) {
+            this.max = max;
+            this.diff = max - min;
+        }
+
+        @Override
+        public String toString() {
+            return "Range [min=" + min + ", max=" + max + "]";
+        }
+
     }
 
-    private void drawBackground(Graphics2D g) {
-        g.setColor(opts.backgroundColor);
-        g.fillRect(0, 0, opts.width, opts.height);
+    public static class AxisOptions {
+
+        private AxisFormat format = AxisFormat.NUMBER;
+        private boolean dynamicRange = true;
+        private Range range;
+
+        public AxisOptions format(AxisFormat format) {
+            this.format = format;
+            return this;
+        }
+
+        public AxisOptions range(double min, double max) {
+            this.range = new Range(min, max);
+            this.dynamicRange = false;
+            return this;
+        }
+
     }
 
-    public void save(String fileName, String type) throws IOException {
-        clear();
-        BufferedImage bi = draw();
-        File outputFile = new File(fileName + "." + type);
-        ImageIO.write(bi, type, outputFile);
+    public static class DataSeriesOptions {
+
+        private Color seriesColor = Color.BLUE;
+        private Line line = Line.SOLID;
+        private int lineWidth = 2;
+        private float[] lineDash = new float[]{3.0f, 3.0f};
+        private Marker marker = Marker.NONE;
+        private int markerSize = 10;
+        private Color markerColor = Color.WHITE;
+        private Color areaColor = null;
+        private String xAxisName;
+        private String yAxisName;
+        private Axis xAxis;
+        private Axis yAxis;
+
+        public DataSeriesOptions color(Color seriesColor) {
+            this.seriesColor = seriesColor;
+            return this;
+        }
+
+        public DataSeriesOptions line(Line line) {
+            this.line = line;
+            return this;
+        }
+
+        public DataSeriesOptions lineWidth(int width) {
+            this.lineWidth = width;
+            return this;
+        }
+
+        public DataSeriesOptions lineDash(float[] dash) {
+            this.lineDash = dash;
+            return this;
+        }
+
+        public DataSeriesOptions marker(Marker marker) {
+            this.marker = marker;
+            return this;
+        }
+
+        public DataSeriesOptions markerSize(int markerSize) {
+            this.markerSize = markerSize;
+            return this;
+        }
+
+        public DataSeriesOptions markerColor(Color color) {
+            this.markerColor = color;
+            return this;
+        }
+
+        public DataSeriesOptions areaColor(Color color) {
+            this.areaColor = color;
+            return this;
+        }
+
+        public DataSeriesOptions xAxis(String name) {
+            this.xAxisName = name;
+            return this;
+        }
+
+        public DataSeriesOptions yAxis(String name) {
+            this.yAxisName = name;
+            return this;
+        }
+
+        private void setPlot(Plot plot) {
+            if (plot != null)
+                this.xAxis = plot.xAxes.get(xAxisName);
+            if (plot != null)
+                this.yAxis = plot.yAxes.get(yAxisName);
+        }
+
+    }
+
+    public static class Data {
+
+        private double[] x1;
+        private double[] y1;
+        private List<Double> x2;
+        private List<Double> y2;
+
+        private Data() {
+        }
+
+        public Data xy(double[] x, double[] y) {
+            this.x1 = x;
+            this.y1 = y;
+            return this;
+        }
+
+        public Data xy(double x, double y) {
+            if (this.x2 == null || this.y2 == null) {
+                this.x2 = new ArrayList<Double>(10);
+                this.y2 = new ArrayList<Double>(10);
+            }
+            x2.add(x);
+            y2.add(y);
+            return this;
+        }
+
+        public Data xy(List<Double> x, List<Double> y) {
+            this.x2 = x;
+            this.y2 = y;
+            return this;
+        }
+
+        public int size() {
+            if (x1 != null)
+                return x1.length;
+            if (x2 != null)
+                return x2.size();
+            return 0;
+        }
+
+        public double x(int i) {
+            if (x1 != null)
+                return x1[i];
+            if (x2 != null)
+                return x2.get(i);
+            return 0;
+        }
+
+        public double y(int i) {
+            if (y1 != null)
+                return y1[i];
+            if (y2 != null)
+                return y2.get(i);
+            return 0;
+        }
+
     }
 
     private class Legend {
-        Rectangle rect;
-        Rectangle2D labelRect;
         public int entryWidth;
         public int entryWidthPadded;
         public int entryCount;
         public int xCount;
         public int yCount;
+        Rectangle rect;
+        Rectangle2D labelRect;
     }
 
     private class PlotArea {
 
-        private Rectangle plotBorderRect = new Rectangle(); // boundRect | labels/legend | plotBorderRect | plotPadding | plotRect/clipRect
-        private Rectangle plotRect = new Rectangle();
-        private Rectangle plotClipRect = new Rectangle();
-        private Legend legend = new Legend();
+        private final Rectangle plotBorderRect = new Rectangle(); // boundRect | labels/legend | plotBorderRect | plotPadding | plotRect/clipRect
+        private final Rectangle plotRect = new Rectangle();
+        private final Rectangle plotClipRect = new Rectangle();
+        private final Legend legend = new Legend();
 
-        private Range xPlotRange = new Range(0, 0);
-        private Range yPlotRange = new Range(0, 0);
+        private final Range xPlotRange = new Range(0, 0);
+        private final Range yPlotRange = new Range(0, 0);
 
         public PlotArea() {
             clear();
@@ -278,7 +540,10 @@ public class Plot {
             yPlotRange.setMin(plotRect.getY());
             yPlotRange.setMax(plotRect.getY() + plotRect.getHeight());
 
-            plotClipRect.setBounds(plotBorderRect.x + 1, plotBorderRect.y + 1, plotBorderRect.width - 1, plotBorderRect.height - 1);
+            plotClipRect.setBounds(plotBorderRect.x + 1,
+                    plotBorderRect.y + 1,
+                    plotBorderRect.width - 1,
+                    plotBorderRect.height - 1);
         }
 
         private void calc(Graphics2D g) {
@@ -314,9 +579,15 @@ public class Plot {
             calcLegend(g); // use plotRect
             plotBorderRect.setBounds(temp); // restore plotRect
             switch (opts.legend) {
-                case TOP: dy += legend.rect.height + opts.labelPadding; break;
-                case RIGHT: dw += legend.rect.width + opts.labelPadding; break;
-                case BOTTOM: dh += legend.rect.height; break;
+                case TOP:
+                    dy += legend.rect.height + opts.labelPadding;
+                    break;
+                case RIGHT:
+                    dw += legend.rect.width + opts.labelPadding;
+                    break;
+                case BOTTOM:
+                    dh += legend.rect.height;
+                    break;
                 default:
             }
             offset(dx, dy, dw, dh);
@@ -336,7 +607,12 @@ public class Plot {
             g.setColor(opts.foregroundColor);
             g.drawRect(plotBorderRect.x, plotBorderRect.y, plotBorderRect.width, plotBorderRect.height);
             g.setFont(opts.titleFont);
-            drawLabel(g, opts.title, plotBorderRect.x + toInt(plotBorderRect.getWidth() / 2), opts.padding, HorizAlign.CENTER, VertAlign.TOP);
+            drawLabel(g,
+                    opts.title,
+                    plotBorderRect.x + toInt(plotBorderRect.getWidth() / 2),
+                    opts.padding,
+                    HorizAlign.CENTER,
+                    VertAlign.TOP);
         }
 
         private void drawGrid(Graphics2D g) {
@@ -443,12 +719,22 @@ public class Plot {
                 Axis axis = entry.getValue();
                 double xStep = axis.opts.range.diff / opts.grids.x;
 
-                drawLabel(g, axis.name, rightX + opts.labelPadding, bottomY + axisOffset, HorizAlign.LEFT, VertAlign.CENTER);
+                drawLabel(g,
+                        axis.name,
+                        rightX + opts.labelPadding,
+                        bottomY + axisOffset,
+                        HorizAlign.LEFT,
+                        VertAlign.CENTER);
                 g.drawLine(plotRect.x, bottomY + axisOffset, plotRect.x + plotRect.width, bottomY + axisOffset);
 
                 for (int j = 0; j < opts.grids.x + 1; j++) {
                     int x = toInt(plotRect.x + (plotRect.getWidth() / opts.grids.x) * j);
-                    drawLabel(g, formatDouble(axis.opts.range.min + xStep * j, axis.opts.format), x, bottomYPadded + axisOffset, HorizAlign.CENTER, VertAlign.TOP);
+                    drawLabel(g,
+                            formatDouble(axis.opts.range.min + xStep * j, axis.opts.format),
+                            x,
+                            bottomYPadded + axisOffset,
+                            HorizAlign.CENTER,
+                            VertAlign.TOP);
                     g.drawLine(x, bottomY + axisOffset, x, bottomY + opts.tickSize + axisOffset);
                 }
                 axisOffset += toInt(axis.labelRect.getHeight() + opts.labelPadding * 2);
@@ -459,13 +745,26 @@ public class Plot {
                 Axis axis = entry.getValue();
                 double yStep = axis.opts.range.diff / opts.grids.y;
 
-                drawLabel(g, axis.name, leftXPadded - axisOffset, plotBorderRect.y - toInt(axis.labelRect.getHeight() + opts.labelPadding), HorizAlign.RIGHT, VertAlign.CENTER);
-                g.drawLine(plotBorderRect.x - axisOffset, plotRect.y + plotRect.height, plotBorderRect.x - axisOffset, plotRect.y);
+                drawLabel(g,
+                        axis.name,
+                        leftXPadded - axisOffset,
+                        plotBorderRect.y - toInt(axis.labelRect.getHeight() + opts.labelPadding),
+                        HorizAlign.RIGHT,
+                        VertAlign.CENTER);
+                g.drawLine(plotBorderRect.x - axisOffset,
+                        plotRect.y + plotRect.height,
+                        plotBorderRect.x - axisOffset,
+                        plotRect.y);
 
                 for (int j = 0; j < opts.grids.y + 1; j++) {
                     int y = toInt(plotRect.y + (plotRect.getHeight() / opts.grids.y) * j);
-                    drawLabel(g, formatDouble(axis.opts.range.max - yStep * j, axis.opts.format), leftXPadded - axisOffset, y, HorizAlign.RIGHT, VertAlign.CENTER);
-                    g.drawLine(plotBorderRect.x - axisOffset, y,  plotBorderRect.x - opts.tickSize - axisOffset, y);
+                    drawLabel(g,
+                            formatDouble(axis.opts.range.max - yStep * j, axis.opts.format),
+                            leftXPadded - axisOffset,
+                            y,
+                            HorizAlign.RIGHT,
+                            VertAlign.CENTER);
+                    g.drawLine(plotBorderRect.x - axisOffset, y, plotBorderRect.x - opts.tickSize - axisOffset, y);
                 }
                 axisOffset += toInt(axis.labelRect.getWidth() + opts.labelPadding * 2);
             }
@@ -491,7 +790,8 @@ public class Plot {
                 if (rect.getHeight() > legend.labelRect.getHeight())
                     legend.labelRect.setRect(0, 0, legend.labelRect.getWidth(), rect.getHeight());
                 switch (series.opts.marker) {
-                    case CIRCLE: case SQUARE:
+                    case CIRCLE:
+                    case SQUARE:
                         if (series.opts.markerSize + opts.defaultLegendSignSize > legendSignSize)
                             legendSignSize = series.opts.markerSize + opts.defaultLegendSignSize;
                         break;
@@ -508,7 +808,8 @@ public class Plot {
             legend.entryWidthPadded = legend.entryWidth + opts.labelPadding;
 
             switch (opts.legend) {
-                case TOP: case BOTTOM:
+                case TOP:
+                case BOTTOM:
                     legend.entryCount = (int) Math.floor((double) (plotBorderRect.width - opts.labelPadding) / legend.entryWidthPadded);
                     legend.xCount = size <= legend.entryCount ? size : legend.entryCount;
                     legend.yCount = size <= legend.entryCount ? 1 : (int) Math.ceil((double) size / legend.entryCount);
@@ -540,7 +841,8 @@ public class Plot {
             int y = legend.rect.y + opts.labelPadding + labelHeight / 2;
 
             switch (opts.legend) {
-                case TOP: case BOTTOM:
+                case TOP:
+                case BOTTOM:
                     int i = 0;
                     for (DataSeries series : dataSeriesMap.values()) {
                         drawLegendEntry(g, series, x, y);
@@ -567,72 +869,19 @@ public class Plot {
             series.drawLine(g, x, y, x + opts.legendSignSize, y);
             series.drawMarker(g, x + opts.legendSignSize / 2, y, x, y + opts.legendSignSize / 2);
             g.setColor(opts.foregroundColor);
-            drawLabel(g, series.nameWithAxes, x + opts.legendSignSize + opts.labelPadding, y, HorizAlign.LEFT, VertAlign.CENTER);
-        }
-
-    }
-
-    public static class Range {
-
-        private double min;
-        private double max;
-        private double diff;
-
-        public Range(double min, double max) {
-            this.min = min;
-            this.max = max;
-            this.diff = max - min;
-        }
-
-        public Range(Range range) {
-            this.min = range.min;
-            this.max = range.max;
-            this.diff = max - min;
-        }
-
-        public void setMin(double min) {
-            this.min = min;
-            this.diff = max - min;
-        }
-
-        public void setMax(double max) {
-            this.max = max;
-            this.diff = max - min;
-        }
-
-        @Override
-        public String toString() {
-            return "Range [min=" + min + ", max=" + max + "]";
-        }
-
-    }
-
-    public static AxisOptions axisOpts() {
-        return new AxisOptions();
-    }
-
-    public static class AxisOptions {
-
-        private AxisFormat format = AxisFormat.NUMBER;
-        private boolean dynamicRange = true;
-        private Range range;
-
-        public AxisOptions format(AxisFormat format) {
-            this.format = format;
-            return this;
-        }
-
-        public AxisOptions range(double min, double max) {
-            this.range = new Range(min, max);
-            this.dynamicRange = false;
-            return this;
+            drawLabel(g,
+                    series.nameWithAxes,
+                    x + opts.legendSignSize + opts.labelPadding,
+                    y,
+                    HorizAlign.LEFT,
+                    VertAlign.CENTER);
         }
 
     }
 
     private class Axis {
 
-        private String name;
+        private final String name;
         private AxisOptions opts = new AxisOptions();
         private Rectangle2D labelRect;
         private String[] labels;
@@ -650,148 +899,9 @@ public class Plot {
 
     }
 
-    public static DataSeriesOptions seriesOpts() {
-        return new DataSeriesOptions();
-    }
-
-    public static class DataSeriesOptions {
-
-        private Color seriesColor = Color.BLUE;
-        private Line line = Line.SOLID;
-        private int lineWidth = 2;
-        private float[] lineDash = new float[] { 3.0f, 3.0f };
-        private Marker marker = Marker.NONE;
-        private int markerSize = 10;
-        private Color markerColor = Color.WHITE;
-        private Color areaColor = null;
-        private String xAxisName;
-        private String yAxisName;
-        private Axis xAxis;
-        private Axis yAxis;
-
-        public DataSeriesOptions color(Color seriesColor) {
-            this.seriesColor = seriesColor;
-            return this;
-        }
-
-        public DataSeriesOptions line(Line line) {
-            this.line = line;
-            return this;
-        }
-
-        public DataSeriesOptions lineWidth(int width) {
-            this.lineWidth = width;
-            return this;
-        }
-
-        public DataSeriesOptions lineDash(float[] dash) {
-            this.lineDash = dash;
-            return this;
-        }
-
-        public DataSeriesOptions marker(Marker marker) {
-            this.marker = marker;
-            return this;
-        }
-
-        public DataSeriesOptions markerSize(int markerSize) {
-            this.markerSize = markerSize;
-            return this;
-        }
-
-        public DataSeriesOptions markerColor(Color color) {
-            this.markerColor = color;
-            return this;
-        }
-
-        public DataSeriesOptions areaColor(Color color) {
-            this.areaColor = color;
-            return this;
-        }
-
-        public DataSeriesOptions xAxis(String name) {
-            this.xAxisName = name;
-            return this;
-        }
-
-        public DataSeriesOptions yAxis(String name) {
-            this.yAxisName = name;
-            return this;
-        }
-
-        private void setPlot(Plot plot) {
-            if (plot != null)
-                this.xAxis = plot.xAxes.get(xAxisName);
-            if (plot != null)
-                this.yAxis = plot.yAxes.get(yAxisName);
-        }
-
-    }
-
-    public static Data data() {
-        return new Data();
-    }
-
-    public static class Data {
-
-        private double[] x1;
-        private double[] y1;
-        private List<Double> x2;
-        private List<Double> y2;
-
-        private Data() {}
-
-        public Data xy(double[] x, double[] y) {
-            this.x1 = x;
-            this.y1 = y;
-            return this;
-        }
-
-        public Data xy(double x, double y) {
-            if (this.x2 == null || this.y2 == null) {
-                this.x2 = new ArrayList<Double>(10);
-                this.y2 = new ArrayList<Double>(10);
-            }
-            x2.add(x);
-            y2.add(y);
-            return this;
-        }
-
-        public Data xy(List<Double> x, List<Double> y) {
-            this.x2 = x;
-            this.y2 = y;
-            return this;
-        }
-
-        public int size() {
-            if (x1 != null)
-                return x1.length;
-            if (x2 != null)
-                return x2.size();
-            return 0;
-        }
-
-        public double x(int i) {
-            if (x1 != null)
-                return x1[i];
-            if (x2 != null)
-                return x2.get(i);
-            return 0;
-        }
-
-        public double y(int i) {
-            if (y1 != null)
-                return y1[i];
-            if (y2 != null)
-                return y2.get(i);
-            return 0;
-        }
-
-    }
-
     public class DataSeries {
 
-        private String name;
+        private final String name;
         private String nameWithAxes;
         private DataSeriesOptions opts = new DataSeriesOptions();
         private Data data;
@@ -809,7 +919,7 @@ public class Plot {
         }
 
         private void addAxesToName() {
-            this.nameWithAxes = this.name + " (" + opts.yAxis.name +	"/" + opts.xAxis.name + ")";
+            this.nameWithAxes = this.name + " (" + opts.yAxis.name + "/" + opts.xAxis.name + ")";
         }
 
         private Range xRange() {
@@ -885,8 +995,8 @@ public class Plot {
             if (opts.areaColor != null) {
                 g.setColor(opts.areaColor);
                 g.fill(new Polygon(
-                        new int[] { ix1, ix2, ix2, ix1 },
-                        new int[] { iy1, iy2, iy3, iy3 },
+                        new int[]{ix1, ix2, ix2, ix1},
+                        new int[]{iy1, iy2, iy3, iy3},
                         4));
                 g.setColor(opts.seriesColor);
             }
@@ -915,28 +1025,46 @@ public class Plot {
 
         private void drawMarker(Graphics2D g, int x2, int y2, int x3, int y3) {
             int halfMarkerSize = opts.markerSize / 2;
-            int halfDiagMarkerSize =  getDiagMarkerSize() / 2;
+            int halfDiagMarkerSize = getDiagMarkerSize() / 2;
             g.setStroke(new BasicStroke(2));
             drawMarker(g, halfMarkerSize, halfDiagMarkerSize, x2, y2, x3, y3);
         }
 
-        private void drawMarker(Graphics2D g, int halfMarkerSize, int halfDiagMarkerSize, double x2, double y2, double x3, double y3) {
+        private void drawMarker(Graphics2D g,
+                                int halfMarkerSize,
+                                int halfDiagMarkerSize,
+                                double x2,
+                                double y2,
+                                double x3,
+                                double y3) {
             switch (opts.marker) {
                 case CIRCLE:
                     g.setColor(opts.markerColor);
-                    g.fillOval(toInt(x2 - halfMarkerSize), toInt(y2 - halfMarkerSize), opts.markerSize, opts.markerSize);
+                    g.fillOval(toInt(x2 - halfMarkerSize),
+                            toInt(y2 - halfMarkerSize),
+                            opts.markerSize,
+                            opts.markerSize);
                     g.setColor(opts.seriesColor);
-                    g.drawOval(toInt(x2 - halfMarkerSize), toInt(y2 - halfMarkerSize), opts.markerSize, opts.markerSize);
+                    g.drawOval(toInt(x2 - halfMarkerSize),
+                            toInt(y2 - halfMarkerSize),
+                            opts.markerSize,
+                            opts.markerSize);
                     break;
                 case SQUARE:
                     g.setColor(opts.markerColor);
-                    g.fillRect(toInt(x2 - halfMarkerSize), toInt(y2 - halfMarkerSize), opts.markerSize, opts.markerSize);
+                    g.fillRect(toInt(x2 - halfMarkerSize),
+                            toInt(y2 - halfMarkerSize),
+                            opts.markerSize,
+                            opts.markerSize);
                     g.setColor(opts.seriesColor);
-                    g.drawRect(toInt(x2 - halfMarkerSize), toInt(y2 - halfMarkerSize), opts.markerSize, opts.markerSize);
+                    g.drawRect(toInt(x2 - halfMarkerSize),
+                            toInt(y2 - halfMarkerSize),
+                            opts.markerSize,
+                            opts.markerSize);
                     break;
                 case DIAMOND:
-                    int[] xpts = { toInt(x2), toInt(x2 + halfDiagMarkerSize), toInt(x2), toInt(x2 - halfDiagMarkerSize) };
-                    int[] ypts = { toInt(y2 - halfDiagMarkerSize), toInt(y2), toInt(y2 + halfDiagMarkerSize), toInt(y2) };
+                    int[] xpts = {toInt(x2), toInt(x2 + halfDiagMarkerSize), toInt(x2), toInt(x2 - halfDiagMarkerSize)};
+                    int[] ypts = {toInt(y2 - halfDiagMarkerSize), toInt(y2), toInt(y2 + halfDiagMarkerSize), toInt(y2)};
                     g.setColor(opts.markerColor);
                     g.fillPolygon(xpts, ypts, 4);
                     g.setColor(opts.seriesColor);
@@ -958,72 +1086,6 @@ public class Plot {
             }
         }
 
-    }
-
-    private static void drawLabel(Graphics2D g, String s, int x, int y, HorizAlign hAlign, VertAlign vAlign) {
-        FontMetrics fm = g.getFontMetrics();
-        Rectangle2D rect = fm.getStringBounds(s, g);
-
-        // by default align by left
-        if (hAlign == HorizAlign.RIGHT)
-            x -= rect.getWidth();
-        else if (hAlign == HorizAlign.CENTER)
-            x -= rect.getWidth() / 2;
-
-        // by default align by bottom
-        if (vAlign == VertAlign.TOP)
-            y += rect.getHeight();
-        else if (vAlign == VertAlign.CENTER)
-            y += rect.getHeight() / 2;
-
-        g.drawString(s, x, y);
-    }
-
-    public static String formatDouble(double d, AxisFormat format) {
-        switch (format) {
-            case TIME_HM: return String.format("%tR", new java.util.Date((long) d));
-            case TIME_HMS: return String.format("%tT", new java.util.Date((long) d));
-            case DATE: return String.format("%tF", new java.util.Date((long) d));
-            case DATETIME_HM: return String.format("%tF %1$tR", new java.util.Date((long) d));
-            case DATETIME_HMS: return String.format("%tF %1$tT", new java.util.Date((long) d));
-            case NUMBER_KGM: return formatDoubleAsNumber(d, true);
-            case NUMBER_INT: return Integer.toString((int) d);
-            default: return formatDoubleAsNumber(d, false);
-        }
-    }
-
-    private static String formatDoubleAsNumber(double d, boolean useKGM) {
-        if (useKGM && d > 1000 && d < 1000000000000l) {
-            long[] numbers = new long[] { 1000l, 1000000l, 1000000000l };
-            char[] suffix = new char[] { 'K', 'M', 'G' };
-
-            int i = 0;
-            double r = 0;
-            for (long number : numbers) {
-                r = d / number;
-                if (r < 1000)
-                    break;
-                i++;
-            }
-            if (i == suffix.length)
-                i--;
-            return String.format("%1$,.2f%2$c", r, suffix[i]);
-        }
-        else
-            return String.format("%1$.3G", d);
-    }
-
-    private static double x2x(double x, Range xr1, Range xr2) {
-        return xr1.diff == 0 ? xr2.min + xr2.diff / 2 : xr2.min + (x - xr1.min) / xr1.diff * xr2.diff;
-    }
-
-    // y axis is reverse in Graphics
-    private static double y2y(double x, Range xr1, Range xr2) {
-        return xr1.diff == 0 ? xr2.min + xr2.diff / 2 : xr2.max - (x - xr1.min) / xr1.diff * xr2.diff;
-    }
-
-    private static int toInt(double d) {
-        return (int) Math.round(d);
     }
 
 }
