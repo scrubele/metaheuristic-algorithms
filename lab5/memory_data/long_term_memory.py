@@ -43,5 +43,5 @@ class Diversification(Memory):
         smallest_dict = deepcopy(self.hidden_list)
         smallest_dict = self.pick_all_zeros(smallest_dict)
         smallest_dict = dict(sorted(smallest_dict.items(), key=lambda item: item[1][1])[:self.pick_number])
-        print("Picked values by the diversification run:", smallest_dict)
+        # print("Picked values by the diversification run:", smallest_dict)
         self.should_pick_values = deepcopy(smallest_dict)

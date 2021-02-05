@@ -51,7 +51,8 @@ class NeighbourhoodGenerationStrategy(Enum):
             # print(should_pick_values)
             for swap_first_position, swap_first in should_pick_values:
                 current_neighbour = initial_solution.set_value(swap_first_position, swap_first)
-                neighbour_solutions.append(current_neighbour)
+                if current_neighbour is not None:
+                    neighbour_solutions.append(current_neighbour)
         return neighbour_solutions
 
     def generate_neighbours(self, initial_solution, frozen_values, should_pick_values=None):

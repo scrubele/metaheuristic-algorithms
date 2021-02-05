@@ -72,11 +72,18 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
         swap_last_pos = [i for i in current_encoding if i == swap_first_value]
         if len(swap_last_pos)>0:
             swap_last_pos = min(swap_last_pos)
+        else:
+            swap_last_pos = 0
         if swap_last_value is not swap_first_value:
             current_encoding[swap_first_pos] = swap_first_value
             current_encoding[swap_last_pos] = swap_last_value
-        current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first_pos, swap_first_value))
-        return current_solution
+            encoding_size = len(current_encoding)
+            unique_ones = len(set(current_encoding))
+            # print("encoding_size", encoding_size, "unique_ones", unique_ones)
+            if encoding_size == unique_ones:
+                current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first_pos, swap_first_value))
+                return current_solution
+        return None
 
     def get_size(self) -> int:
         return len(self.encoding)

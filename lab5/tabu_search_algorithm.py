@@ -44,18 +44,18 @@ class TabuSearchAlgorithm:
         current_solution = self.best_solution
         current_iteration = 0
         while self.stopping_criteria.is_satisfied(current_iteration):
-            print("\niteration:", current_iteration, "\tsolution:", current_solution)
+            # print("iteration:", current_iteration, "\tsolution:", current_solution)
             best_admissible_solution = self.find_best_neighbour(current_solution=current_solution)
 
             if self.aspiration_criteria.is_satisfied(best_admissible_solution, self.best_solution):
                 self.best_solution = best_admissible_solution
-                self.long_term_memory.unsuccess_iterations = 0
+                self.long_term_memory.unsuccess_iterations = current_iteration/100
             else:
                 # print("Not improving iteration: ", self.long_term_memory.unsuccess_iterations)
                 self.long_term_memory.unsuccess_iterations += 1
 
             self.short_term_memory.add(solution=best_admissible_solution)
-            print('TabuQueue: ', self.short_term_memory.queue)
+            # print('TabuQueue: ', self.short_term_memory.queue)
             current_solution = best_admissible_solution
             self.middle_term_memory.add(solution=self.best_solution)
             # print("Frozen values: ", self.middle_term_memory.frozen_values)

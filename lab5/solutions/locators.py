@@ -32,5 +32,7 @@ class SolutionNeighbourLocator:
 
     def find_best_neighbour(self, tabu_list):
         candidate_solution_list = deepcopy(self.candidate_solutions)
-        best_admissible_solution = min(candidate_solution_list)
-        return best_admissible_solution
+        if len(candidate_solution_list) > 0:
+            best_admissible_solution = min(candidate_solution_list)
+            return best_admissible_solution
+        return None

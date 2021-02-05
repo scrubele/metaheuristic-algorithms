@@ -9,8 +9,18 @@ def read_from_resources(file_name: str) -> np.array:
 
 def plot_matrix(file_name, matrix):
     # matrix = matrix.astype(float)
-    plt.imshow(matrix, cmap='viridis', interpolation='nearest')
-    plt.savefig("results/" + file_name)
+    fig, ax = plt.subplots()
+    ax.imshow(matrix, cmap='viridis', interpolation='nearest')
+    # Loop over data dimensions and create text annotations.
+    for i in range(0, len(matrix)):
+        for j in range(0, len(matrix)):
+            # print(i, j)
+            text = ax.text(i, j, matrix[i] [j],
+                           ha="center", va="center", color="w")
+    ax.set_title(file_name)
+    fig.tight_layout()
+    # plt.show()
+    plt.savefig("results/" + file_name +".png")
 
 
 def plot_solutions(solution_list):
