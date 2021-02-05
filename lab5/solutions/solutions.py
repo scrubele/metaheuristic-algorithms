@@ -24,7 +24,7 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
     def initialize_solution(self):
         solution = [i for i in range(0, self.solution_size)]
         random.shuffle(solution)
-        print(solution)
+        # print(solution)
         return solution
 
     def get_convergence(self, weights, solution=None) -> float:
