@@ -9,7 +9,7 @@ class SolutionNeighbourLocator:
     def __init__(self, initial_solution, intensification, diversification, aspiration_criteria=AspirationCriteria,
                  neighbourhood_criteria=NeighbourhoodGenerationStrategy.SWAP):
         self.initial_solution = initial_solution
-        self.intensification = intensification
+        self.middle_term_memory = intensification
         self.diversification = diversification
         self.aspiration_criteria = aspiration_criteria
         self.neighbourhood_criteria = neighbourhood_criteria
@@ -18,7 +18,7 @@ class SolutionNeighbourLocator:
                                                                                    frozen_values=self.frozen_values)
 
     def normalize_frozen_values(self):
-        frozen_values = self.intensification.frozen_values
+        frozen_values = self.middle_term_memory.frozen_values
         self.frozen_values = [(key, value[0]) for key, value in frozen_values.items()]
         # print("Frozen values:", self.frozen_values)
 

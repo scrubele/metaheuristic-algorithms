@@ -23,11 +23,8 @@ if __name__ == "__main__":
     print("intensification", intensification)
     plot_matrix(file_name="intensification.png", matrix=intensification.matrix)
 
-    diversification = tabu_search_algorithm.diversification
+    diversification = tabu_search_algorithm.long_term_memory
     print("diversification", diversification)
     plot_matrix(file_name="diversification.png", matrix=diversification.matrix)
-
-    print("frozen", intensification.frozen_values)
-    print("div", diversification.hidden_list)
 
     print("\nAlgorithm result:", algorithm_result)

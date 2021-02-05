@@ -6,26 +6,22 @@ from memory_data.memory import Memory
 
 class Diversification(Memory):
 
-    def __init__(self, size, threshold_number, pick_number=3, criteria_threshold_value=0, criteria=MemoryCriteria,
-                 ):
-        super().__init__(size, threshold_value=criteria_threshold_value, criteria=criteria,
-                         )
+    def __init__(self, size, threshold_number, pick_number=3, criteria_threshold_value=0, criteria=MemoryCriteria):
+        super().__init__(size, threshold_value=criteria_threshold_value, criteria=criteria)
         self.threshold_number = threshold_number
         self.pick_number = pick_number
-        self.value = 0
+        self.unsuccess_iterations = 0
         self.hidden_list = {}
 
     def run(self, intensification):
-        if self.value > self.threshold_number:
+        if self.unsuccess_iterations > self.threshold_number:
             # print("threshold")
             self.find_the_smallest_values()
             intensification.frozen_values = self.frozen_values
-            self.value = 0
+            self.unsuccess_iterations = 0
 
     def __add(self, pairs):
-        for pair in pairs:
-            value = pair[0]
-            value_position = pair[1]
+        for value, value_position in pairs:
             # print("value", value, "value_position", value_position, "previous", self.matrix[value][value_position])
             self.matrix[value][value_position] += 1
             self.matrix[value_position][value] += 1

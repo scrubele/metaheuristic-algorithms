@@ -88,16 +88,16 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
         return hash(self.__key())
 
     def __cmp__(self, other):
-        return cmp(self.value, other.value)
+        return cmp(self.value, other.unsuccess_iterations)
 
     def __lt__(self, other):
-        return self.value < other.value
+        return self.value < other.unsuccess_iterations
 
     def __gt__(self, other):
-        return self.value > other.value
+        return self.value > other.unsuccess_iterations
 
     def __le__(self, other):
-        return self.value <= other.value
+        return self.value <= other.unsuccess_iterations
 
     def __ge__(self, other):
-        return self.value >= other.value
+        return self.value >= other.unsuccess_iterations

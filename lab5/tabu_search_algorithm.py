@@ -29,15 +29,13 @@ class TabuSearchAlgorithm:
         self.neighbour_locator = neighbour_locator
         self.stopping_criteria = stopping_criteria(max_iterations=max_iterations)
         self.aspiration_criteria = aspiration_criteria(criteria=optimization)
-        self.tabu_queue = TabuQueue(maxsize=tabu_queue_size, memory_strategy=tabu_memory_strategy)
-        self.memory_frozen_dict = {}
-        self.intensification = Intensification(size=self.weights_size,
-                                               criteria_threshold_value=intensification_threshold_value,
-                                               )
-        self.diversification = Diversification(size=self.weights_size,
-                                               threshold_number=diversification_threshold_value,
-                                               pick_number=diversification_pick_number,
-                                               )
+
+        self.short_term_memory = TabuQueue(maxsize=tabu_queue_size, memory_strategy=tabu_memory_strategy)
+        self.middle_term_memory = Intensification(size=self.weights_size,
+                                                  criteria_threshold_value=intensification_threshold_value)
+        self.long_term_memory = Diversification(size=self.weights_size,
+                                                threshold_number=diversification_threshold_value,
+                                                pick_number=diversification_pick_number)
 
     def objective_function(self):
         current_solution = self.best_solution
@@ -48,25 +46,25 @@ class TabuSearchAlgorithm:
 
             if self.aspiration_criteria.is_satisfied(best_admissible_solution, self.best_solution):
                 self.best_solution = best_admissible_solution
-                self.diversification.value = 0
+                self.long_term_memory.unsuccess_iterations = 0
             else:
-                print("Not improving iteration: ", self.diversification.value)
-                self.diversification.value += 1
+                print("Not improving iteration: ", self.long_term_memory.unsuccess_iterations)
+                self.long_term_memory.unsuccess_iterations += 1
 
-            self.tabu_queue.add(solution=best_admissible_solution)
+            self.short_term_memory.add(solution=best_admissible_solution)
             current_solution = best_admissible_solution
 
-            self.intensification.add(solution=self.best_solution)
-            self.diversification.add(solution=current_solution)
-            self.diversification.run(self.intensification)
+            self.middle_term_memory.add(solution=self.best_solution)
+            self.long_term_memory.add(solution=current_solution)
+            self.long_term_memory.run(self.middle_term_memory)
             current_iteration += 1
         return self.best_solution
 
     def find_best_neighbour(self, current_solution):
         neighbour_locator = self.neighbour_locator(current_solution,
-                                                   intensification=self.intensification,
-                                                   diversification=self.diversification)
+                                                   intensification=self.middle_term_memory,
+                                                   diversification=self.long_term_memory)
         candidate_neighbours = neighbour_locator.candidate_solutions
         print("Candidate neighbours: ", candidate_neighbours)
-        best_admissible_solution = neighbour_locator.find_best_neighbour(tabu_list=self.tabu_queue.queue)
+        best_admissible_solution = neighbour_locator.find_best_neighbour(tabu_list=self.short_term_memory.queue)
         return best_admissible_solution
