@@ -75,7 +75,7 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
         if swap_last_value is not swap_first_value:
             current_encoding[swap_first_pos] = swap_first_value
             current_encoding[swap_last_pos] = swap_last_value
-            current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first_pos, swap_first_value))
+        current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first_pos, swap_first_value))
         return current_solution
 
     def get_size(self) -> int:

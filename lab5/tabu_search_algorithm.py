@@ -40,6 +40,7 @@ class TabuSearchAlgorithm:
                                                 pick_number=diversification_pick_number)
 
     def objective_function(self):
+        result_plot_list = []
         current_solution = self.best_solution
         current_iteration = 0
         while self.stopping_criteria.is_satisfied(current_iteration):
@@ -50,26 +51,27 @@ class TabuSearchAlgorithm:
                 self.best_solution = best_admissible_solution
                 self.long_term_memory.unsuccess_iterations = 0
             else:
-                print("Not improving iteration: ", self.long_term_memory.unsuccess_iterations)
+                # print("Not improving iteration: ", self.long_term_memory.unsuccess_iterations)
                 self.long_term_memory.unsuccess_iterations += 1
 
             self.short_term_memory.add(solution=best_admissible_solution)
             print('TabuQueue: ', self.short_term_memory.queue)
             current_solution = best_admissible_solution
             self.middle_term_memory.add(solution=self.best_solution)
-            print("Frozen values: ", self.middle_term_memory.frozen_values)
+            # print("Frozen values: ", self.middle_term_memory.frozen_values)
             self.long_term_memory.add(solution=current_solution)
-            print("Frozen values: ", self.long_term_memory.should_pick_values)
+            # print("Pick values: ", self.long_term_memory.should_pick_values)
             self.long_term_memory.run()
+            result_plot_list.append(current_solution)
             current_iteration += 1
-        return self.best_solution
+        return self.best_solution, result_plot_list
 
     def find_best_neighbour(self, current_solution):
         neighbour_locator = self.neighbour_locator(current_solution,
                                                    intensification=self.middle_term_memory,
                                                    diversification=self.long_term_memory)
         candidate_neighbours = neighbour_locator.candidate_solutions
-        print("Candidate neighbours: ", candidate_neighbours)
+        # print("Candidate neighbours: ", candidate_neighbours)
         best_admissible_solution = neighbour_locator.find_best_neighbour(tabu_list=self.short_term_memory.queue)
-        print("Best admissible solution:", best_admissible_solution.swap)
+        # print("Best admissible solution:", best_admissible_solution.swap)
         return best_admissible_solution
