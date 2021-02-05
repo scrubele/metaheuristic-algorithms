@@ -22,15 +22,15 @@ def run_algorithm():
 def run_multiple_items():
     i = 0
     smallest_values = []
-    smallest_value = 291
     max_iterations = 10
     while i < max_iterations:
         tabu_search_algorithm, algorithm_result, plot_data = run_algorithm()
         smallest_values.append(algorithm_result.value)
         print("Algorithm result:", algorithm_result)
         i += 1
+    smallest_value = min(smallest_values)
     smallest_value_frequency = sum([1 for value in smallest_values if value == smallest_value]) / max_iterations
-    print("Smallest value frequency", smallest_value_frequency*100, "%")
+    print("Smallest value frequency", smallest_value_frequency * 100, "%")
 
 
 def run_algorithm_with_analytics():
@@ -49,8 +49,9 @@ def run_algorithm_with_analytics():
     plot_solutions(plot_data)
 
 
+FILE_NAMES = ["p01.15.291.tsp", "five.19.tsp", "gr17.2085.tsp", "br17.39.atsp"]
 if __name__ == "__main__":
-    weights = read_from_resources("p01.15.291.tsp")
+    weights = read_from_resources(FILE_NAMES[0])
     # weights = read_from_resources("gr17.2085.tsp")
     print(weights)
-    run_multiple_items()
+    run_algorithm_with_analytics()
