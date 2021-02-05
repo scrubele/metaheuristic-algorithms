@@ -12,7 +12,7 @@ public class TravellingSalesmanProblemTest {
         Utility.clearTheFile("result.xls");
         Utility.clearTheFile("descents.xls");
         TravellingSalesmanProblem travellingSalesmanProblem = new TravellingSalesmanProblem(SelectionStrategy.BEST_IMPROVEMENT);
-        ArrayList<ArrayList<Float>> inputMatrix = Utility.readMatrixFromFile("gr17.2085.tsp");
+        ArrayList<ArrayList<Float>> inputMatrix = Utility.readMatrixFromFile("br17.39.atsp");
         System.out.println("City data:");
         Utility.printMatrix(inputMatrix);
         int maxEpoch = 20;

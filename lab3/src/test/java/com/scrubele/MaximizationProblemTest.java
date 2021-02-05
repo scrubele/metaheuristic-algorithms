@@ -13,9 +13,9 @@ public class MaximizationProblemTest {
     public void test1(int i) {
         Utility.clearTheFile("result.xls");
         MaximizationProblem maximizationProblem = new MaximizationProblem(SelectionStrategy.FIRST_IMPROVEMENT);
-        List<Integer> equationCoefficients = Arrays.asList(1, -30, 50, 0);
-        int minResultValue = 20;
-        int maxResultValue = 50;
+        List<Integer> equationCoefficients = Arrays.asList(1, -60, 900, 100);
+        int minResultValue = 9;
+        int maxResultValue = 32;
         int maxEpoch = 20;
         Map<List<Integer>, Float> results = maximizationProblem.objectiveFunction(equationCoefficients, minResultValue,
                 maxResultValue, maxEpoch);

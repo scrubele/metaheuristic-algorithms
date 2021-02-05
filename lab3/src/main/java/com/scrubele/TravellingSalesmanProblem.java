@@ -54,6 +54,7 @@ public class TravellingSalesmanProblem extends LocalSearchAlgorithm {
     public Set<List<Integer>> generateSolutions(ArrayList<ArrayList<Float>> weights,
                                                 Map<List<Integer>, Float> initialSolutionToValue) {
         Set<List<Integer>> candidateSolutions = new HashSet<>();
+
         candidateSolutions.addAll(generateSolutionSet(candidateSolutions, weights,
                 initialSolutionToValue));
         return candidateSolutions;
