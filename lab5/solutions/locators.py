@@ -20,13 +20,10 @@ class SolutionNeighbourLocator:
     def normalize_frozen_values(self):
         frozen_values = self.intensification.frozen_values
         self.frozen_values = [(key, value[0]) for key, value in frozen_values.items()]
-        print("frozen_list", self.frozen_values)
+        # print("Frozen values:", self.frozen_values)
 
     def find_best_neighbour(self, tabu_list):
         candidate_solution_list = deepcopy(self.candidate_solutions)
-        # difference_list = set(tabu_list).symmetric_difference(candidate_solution_list)
         best_admissible_solution = min(candidate_solution_list)
-        print("best", best_admissible_solution)
-        # if isinstance(best_admissible_solution, TabuElement):
-        #     return None
+        print("Best admissible solution:", best_admissible_solution)
         return best_admissible_solution

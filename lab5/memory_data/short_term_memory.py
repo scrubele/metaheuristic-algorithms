@@ -13,7 +13,7 @@ class TabuElement:
         return self.value < other.value
 
     def __repr__(self):
-        return "Element: " + str(self.element) + "| value: " + str(self.value)
+        return "Element: " + str(self.element) + " | value: " + str(self.value)
 
 
 class TabuQueue(Queue):
@@ -43,3 +43,4 @@ class TabuQueue(Queue):
         if picked_value not in self.queue:
             tabu_element = TabuElement(picked_value, solution.value)
             self.__add(tabu_element)
+        print('TabuQueue: ', self.queue)

@@ -9,13 +9,14 @@ if __name__ == "__main__":
     print(weights)
 
     tabu_search_algorithm = TabuSearchAlgorithm(
-            weights=weights,
-            tabu_queue_size=5,
-            tabu_memory_strategy=MemoryStrategy.SAVE_IDS,
-            intensification_threshold_value=10,
-            diversification_threshold_value=20,
-            diversification_pick_number=2,
-            max_iterations=400, )
+        weights=weights,
+        tabu_queue_size=5,
+        tabu_memory_strategy=MemoryStrategy.SAVE_IDS,
+        intensification_threshold_value=10,
+        diversification_threshold_value=20,
+        diversification_pick_number=2,
+        max_iterations=400,
+    )
     algorithm_result = tabu_search_algorithm.objective_function()
 
     intensification = tabu_search_algorithm.intensification

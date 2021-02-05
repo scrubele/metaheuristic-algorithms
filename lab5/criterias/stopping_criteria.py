@@ -7,5 +7,5 @@ class IterationStopCriteria:
     def __init__(self, max_iterations=MAX_ITERATIONS):
         self.max_iteration_number = max_iterations
 
-    def is_satisfied(self, current_iteration, previous_solution, best_solution) -> bool:
+    def is_satisfied(self, current_iteration) -> bool:
         return current_iteration <= self.max_iteration_number

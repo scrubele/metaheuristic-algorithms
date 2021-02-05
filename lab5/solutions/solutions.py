@@ -15,7 +15,6 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
     def __init__(self, weights, encoding=None, swap=()):
         super().__init__()
         self.weights = weights
-        # print(weights)
         self.solution_size = len(self.weights)
         self.encoding = encoding if encoding is not None else self.initialize_solution()
         self.get_convergence(weights=weights)
@@ -24,7 +23,6 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
     def initialize_solution(self):
         solution = [i for i in range(0, self.solution_size)]
         random.shuffle(solution)
-        # print(solution)
         return solution
 
     def get_convergence(self, weights, solution=None) -> float:
@@ -46,7 +44,6 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
         return current_solution
 
     def generate_random_neighbour(self):
-        # item_to_flip = random.random() * (len(self.weights) - 1)
         return self.__class__(weights=self.weights, encoding=self.generate_neighbour())
 
     def generate_neighbour_solution(self, start_item, last_item):
@@ -67,7 +64,6 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
         current_encoding[swap_first] = current_encoding[swap_last]
         current_encoding[swap_last] = temp
         current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first, swap_last))
-        # print(current_solution.swap)
         return current_solution
 
     def get_size(self) -> int:
@@ -76,11 +72,13 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
     def __str__(self):
         return "Encoding: " + str(self.encoding) + "|" + " value:" + str(self.value)
 
+    def __repr__(self):
+        return "Encoding: " + str(self.encoding) + "|" + " value:" + str(self.value)
+
     def __eq__(self, other):
         if not isinstance(other, TravelerSalesmanProblemSolution):
             # don't attempt to compare against unrelated types
             return NotImplemented
-
         return self.encoding == other.encoding and self.value == other.value
 
     def __key(self):
@@ -88,9 +86,6 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
 
     def __hash__(self):
         return hash(self.__key())
-
-    def __repr__(self):
-        return "Encoding: " + str(self.encoding) + "|" + " value:" + str(self.value)
 
     def __cmp__(self, other):
         return cmp(self.value, other.value)

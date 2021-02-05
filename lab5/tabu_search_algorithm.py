@@ -1,8 +1,8 @@
 from criterias.aspiration_criteria import AspirationCriteria, OptimizationStrategy
-from criterias.stop_criteria import IterationStopCriteria
-from memory_lists.memory_diversification import Diversification
-from memory_lists.memory_intensification import Intensification
-from memory_lists.tabu_list import TabuQueue, MemoryStrategy
+from criterias.stopping_criteria import IterationStopCriteria
+from memory_data.long_term_memory import Diversification
+from memory_data.middle_term_memory import Intensification
+from memory_data.short_term_memory import TabuQueue, MemoryStrategy
 from solutions.locators import SolutionNeighbourLocator
 from solutions.solutions import TravelerSalesmanProblemSolution
 
@@ -33,40 +33,40 @@ class TabuSearchAlgorithm:
         self.memory_frozen_dict = {}
         self.intensification = Intensification(size=self.weights_size,
                                                criteria_threshold_value=intensification_threshold_value,
-                                               memory_frozen_dict=self.memory_frozen_dict)
+                                               )
         self.diversification = Diversification(size=self.weights_size,
                                                threshold_number=diversification_threshold_value,
                                                pick_number=diversification_pick_number,
-                                               memory_frozen_dict=self.memory_frozen_dict
                                                )
 
     def objective_function(self):
         current_solution = self.best_solution
-        previous_solution = None
         current_iteration = 0
-        while self.stopping_criteria.is_satisfied(current_iteration, previous_solution, current_solution):
-            print("\niteration ", current_iteration, "\tsolution:", current_solution)
-            neighbour_locator = self.neighbour_locator(current_solution,
-                                                       intensification=self.intensification,
-                                                       diversification=self.diversification)
-            candidate_neighbours = neighbour_locator.candidate_solutions
-            print("candidate neighbours", candidate_neighbours)
-            best_admissible_solution = neighbour_locator.find_best_neighbour(tabu_list=self.tabu_queue.queue)
-            # print(best_admissible_solution, self.best_solution)
+        while self.stopping_criteria.is_satisfied(current_iteration):
+            print("\niteration:", current_iteration, "\tsolution:", current_solution)
+            best_admissible_solution = self.find_best_neighbour(current_solution=current_solution)
+
             if self.aspiration_criteria.is_satisfied(best_admissible_solution, self.best_solution):
-                previous_solution = self.best_solution
                 self.best_solution = best_admissible_solution
                 self.diversification.value = 0
             else:
-                print("self.diversification.value", self.diversification.value)
+                print("Not improving iteration: ", self.diversification.value)
                 self.diversification.value += 1
+
             self.tabu_queue.add(solution=best_admissible_solution)
-            print('Tabu queue', self.tabu_queue.queue)
             current_solution = best_admissible_solution
-            # start intensification
+
             self.intensification.add(solution=self.best_solution)
             self.diversification.add(solution=current_solution)
             self.diversification.run(self.intensification)
             current_iteration += 1
-        self.diversification.find_the_smallest_values()
         return self.best_solution
+
+    def find_best_neighbour(self, current_solution):
+        neighbour_locator = self.neighbour_locator(current_solution,
+                                                   intensification=self.intensification,
+                                                   diversification=self.diversification)
+        candidate_neighbours = neighbour_locator.candidate_solutions
+        print("Candidate neighbours: ", candidate_neighbours)
+        best_admissible_solution = neighbour_locator.find_best_neighbour(tabu_list=self.tabu_queue.queue)
+        return best_admissible_solution

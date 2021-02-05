@@ -4,12 +4,12 @@ from strategies.memory_strategies import MemoryStrategy
 
 class Memory:
 
-    def __init__(self, size, threshold_value=20, criteria=MemoryCriteria, memory_frozen_dict=None):
+    def __init__(self, size, threshold_value=20, criteria=MemoryCriteria):
         self.size = size
         self.matrix = self.initialize_matrix()
         self.memory_strategy = MemoryStrategy.SAVE_VALUE_POSITIONS
         self.criteria = criteria(threshold_value=threshold_value)
-        self.frozen_values = memory_frozen_dict
+        self.frozen_values = {}
 
     def initialize_matrix(self):
         return [[0 for col in range(self.size)] for row in range(self.size)]
@@ -48,7 +48,3 @@ class Memory:
                 dict.pop(existed_key)
             elif len(existed_values) > 1:
                 dict.pop(value_position)
-
-    def get_frozen_set(self):
-        # sorted_by_second = dict(sorted(self.frozen_values.items(), key=lambda item: item[0]))
-        print("frozen", self.frozen_values)

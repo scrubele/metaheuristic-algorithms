@@ -9,4 +9,3 @@ class MemoryCriteria:
 
     def is_satisfied(self, value) -> bool:
         return value >= self.threshold_value
-
