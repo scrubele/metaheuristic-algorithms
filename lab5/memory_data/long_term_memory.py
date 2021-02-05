@@ -10,14 +10,13 @@ class Diversification(Memory):
         super().__init__(size, threshold_value=criteria_threshold_value, criteria=criteria)
         self.threshold_number = threshold_number
         self.pick_number = pick_number
+        self.should_pick_values = {}
         self.unsuccess_iterations = 0
         self.hidden_list = {}
 
-    def run(self, intensification):
+    def run(self):
         if self.unsuccess_iterations > self.threshold_number:
-            # print("threshold")
             self.find_the_smallest_values()
-            intensification.frozen_values = self.frozen_values
             self.unsuccess_iterations = 0
 
     def __add(self, pairs):
@@ -29,6 +28,7 @@ class Diversification(Memory):
 
     def add(self, solution):
         picked_value = self.memory_strategy.pick(solution=solution)
+        # print(picked_value)
         self.__add(picked_value)
 
     def pick_all_zeros(self, dict):
@@ -44,4 +44,4 @@ class Diversification(Memory):
         smallest_dict = self.pick_all_zeros(smallest_dict)
         smallest_dict = dict(sorted(smallest_dict.items(), key=lambda item: item[1][1])[:self.pick_number])
         print("Picked values by the diversification run:", smallest_dict)
-        self.frozen_values = deepcopy(smallest_dict)
+        self.should_pick_values = deepcopy(smallest_dict)

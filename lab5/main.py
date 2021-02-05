@@ -13,13 +13,13 @@ if __name__ == "__main__":
         tabu_queue_size=5,
         tabu_memory_strategy=MemoryStrategy.SAVE_IDS,
         intensification_threshold_value=10,
-        diversification_threshold_value=20,
-        diversification_pick_number=2,
-        max_iterations=400,
+        diversification_threshold_value=15,
+        diversification_pick_number=5,
+        max_iterations=200,
     )
     algorithm_result = tabu_search_algorithm.objective_function()
 
-    intensification = tabu_search_algorithm.intensification
+    intensification = tabu_search_algorithm.middle_term_memory
     print("intensification", intensification)
     plot_matrix(file_name="intensification.png", matrix=intensification.matrix)
 

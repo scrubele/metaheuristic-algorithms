@@ -6,6 +6,8 @@ from memory_data.short_term_memory import TabuQueue, MemoryStrategy
 from solutions.locators import SolutionNeighbourLocator
 from solutions.solutions import TravelerSalesmanProblemSolution
 
+DEBUG = True
+
 
 class TabuSearchAlgorithm:
 
@@ -52,11 +54,13 @@ class TabuSearchAlgorithm:
                 self.long_term_memory.unsuccess_iterations += 1
 
             self.short_term_memory.add(solution=best_admissible_solution)
+            print('TabuQueue: ', self.short_term_memory.queue)
             current_solution = best_admissible_solution
-
             self.middle_term_memory.add(solution=self.best_solution)
+            print("Frozen values: ", self.middle_term_memory.frozen_values)
             self.long_term_memory.add(solution=current_solution)
-            self.long_term_memory.run(self.middle_term_memory)
+            print("Frozen values: ", self.long_term_memory.should_pick_values)
+            self.long_term_memory.run()
             current_iteration += 1
         return self.best_solution
 
@@ -67,4 +71,5 @@ class TabuSearchAlgorithm:
         candidate_neighbours = neighbour_locator.candidate_solutions
         print("Candidate neighbours: ", candidate_neighbours)
         best_admissible_solution = neighbour_locator.find_best_neighbour(tabu_list=self.short_term_memory.queue)
+        print("Best admissible solution:", best_admissible_solution.swap)
         return best_admissible_solution

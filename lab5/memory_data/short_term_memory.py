@@ -41,6 +41,5 @@ class TabuQueue(Queue):
         picked_value = self.memory_strategy.pick(solution=solution)
         # print("picked value", picked_value, picked_value not in self.queue)
         if picked_value not in self.queue:
-            tabu_element = TabuElement(picked_value, solution.unsuccess_iterations)
+            tabu_element = TabuElement(picked_value, solution.value)
             self.__add(tabu_element)
-        print('TabuQueue: ', self.queue)

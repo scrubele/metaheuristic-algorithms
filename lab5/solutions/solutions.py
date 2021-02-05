@@ -66,6 +66,15 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
         current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first, swap_last))
         return current_solution
 
+    def set_value(self, swap_first_pos, swap_first_value):
+        current_encoding = deepcopy(self.encoding)
+        swap_last_value = current_encoding[swap_first_value]
+        swap_last_pos = [i for i in current_encoding if i == swap_first_value][0]
+        current_encoding[swap_first_pos] = swap_first_value
+        current_encoding[swap_last_pos] = swap_last_value
+        current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first_pos, swap_first_value))
+        return current_solution
+
     def get_size(self) -> int:
         return len(self.encoding)
 
@@ -88,16 +97,16 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
         return hash(self.__key())
 
     def __cmp__(self, other):
-        return cmp(self.value, other.unsuccess_iterations)
+        return cmp(self.value, other.value)
 
     def __lt__(self, other):
-        return self.value < other.unsuccess_iterations
+        return self.value < other.value
 
     def __gt__(self, other):
-        return self.value > other.unsuccess_iterations
+        return self.value > other.value
 
     def __le__(self, other):
-        return self.value <= other.unsuccess_iterations
+        return self.value <= other.value
 
     def __ge__(self, other):
-        return self.value >= other.unsuccess_iterations
+        return self.value >= other.value

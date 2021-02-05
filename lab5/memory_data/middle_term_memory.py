@@ -14,7 +14,6 @@ class Intensification(Memory):
             self.matrix[value_position][value] += 1
             self.is_criteria(self.frozen_values, number=self.matrix[value][value_position],
                              value_pair=(value, value_position))
-        print("Frozen values: ", self.frozen_values)
 
     def add(self, solution):
         picked_value = self.memory_strategy.pick(solution=solution)
