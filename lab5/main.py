@@ -5,7 +5,7 @@ from utilities import read_from_resources, plot_matrix
 DEBUG = False
 
 if __name__ == "__main__":
-    weights = read_from_resources("p01.15.291.tsp")
+    weights = read_from_resources("gr17.2085.tsp")
     print(weights)
 
     tabu_search_algorithm = TabuSearchAlgorithm(
@@ -15,7 +15,7 @@ if __name__ == "__main__":
         intensification_threshold_value=10,
         diversification_threshold_value=15,
         diversification_pick_number=5,
-        max_iterations=200,
+        max_iterations=500,
     )
     algorithm_result = tabu_search_algorithm.objective_function()
 

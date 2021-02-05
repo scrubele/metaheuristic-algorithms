@@ -69,10 +69,13 @@ class TravelerSalesmanProblemSolution(IntegerRepresentation):
     def set_value(self, swap_first_pos, swap_first_value):
         current_encoding = deepcopy(self.encoding)
         swap_last_value = current_encoding[swap_first_value]
-        swap_last_pos = [i for i in current_encoding if i == swap_first_value][0]
-        current_encoding[swap_first_pos] = swap_first_value
-        current_encoding[swap_last_pos] = swap_last_value
-        current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first_pos, swap_first_value))
+        swap_last_pos = [i for i in current_encoding if i == swap_first_value]
+        if len(swap_last_pos)>0:
+            swap_last_pos = min(swap_last_pos)
+        if swap_last_value is not swap_first_value:
+            current_encoding[swap_first_pos] = swap_first_value
+            current_encoding[swap_last_pos] = swap_last_value
+            current_solution = self.__class__(weights=self.weights, encoding=current_encoding, swap=(swap_first_pos, swap_first_value))
         return current_solution
 
     def get_size(self) -> int:
