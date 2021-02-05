@@ -1,21 +1,9 @@
-from enum import Enum, auto
-
-
-class Optimization(Enum):
-    MINIMIZATION = auto()
-    MAXIMIZATION = auto()
-
-    def is_optimized(self, current_value, best_value) -> bool:
-        if self.value == self.MINIMIZATION.value:
-            return current_value <= best_value
-        elif self.value == self.MAXIMIZATION.value:
-            return current_value >= best_value
-        return False
+from strategies.optimization_strategies import OptimizationStrategy
 
 
 class AspirationCriteria:
 
-    def __init__(self, criteria=Optimization.MINIMIZATION):
+    def __init__(self, criteria=OptimizationStrategy.MINIMIZATION):
         self.criteria = criteria
 
     def is_satisfied(self, current_value, best_value) -> bool:

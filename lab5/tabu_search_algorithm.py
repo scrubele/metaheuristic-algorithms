@@ -1,4 +1,4 @@
-from criterias.aspiration_criteria import AspirationCriteria, Optimization
+from criterias.aspiration_criteria import AspirationCriteria, OptimizationStrategy
 from criterias.stop_criteria import IterationStopCriteria
 from memory_lists.memory_diversification import Diversification
 from memory_lists.memory_intensification import Intensification
@@ -17,7 +17,7 @@ class TabuSearchAlgorithm:
                  diversification_threshold_value=20,
                  diversification_pick_number=3,
                  max_iterations=400,
-                 optimization=Optimization.MINIMIZATION,
+                 optimization=OptimizationStrategy.MINIMIZATION,
                  solution_class=TravelerSalesmanProblemSolution,
                  neighbour_locator=SolutionNeighbourLocator,
                  stopping_criteria=IterationStopCriteria,
