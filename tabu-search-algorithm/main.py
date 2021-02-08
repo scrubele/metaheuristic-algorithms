@@ -8,12 +8,13 @@ DEBUG = False
 def run_algorithm():
     tabu_search_algorithm = TabuSearchAlgorithm(
         weights=weights,
-        tabu_queue_size=5,
-        tabu_memory_strategy=MemoryStrategy.SAVE_IDS,
-        intensification_threshold_value=10,  # number of times, four top cities
-        diversification_threshold_value=15,
-        diversification_pick_number=5,
-        max_iterations=200,
+        tabu_queue_size=5,  # the short memory queue size
+        tabu_memory_strategy=MemoryStrategy.SAVE_IDS,  # the short memory strategy
+        intensification_threshold_value=10, # the value that should be reached to run intensification (adding it to
+        # frozen list)
+        diversification_threshold_value=15,  # the value that should be reached to run diversification
+        diversification_pick_number=5,  # the diversification list size
+        max_iterations=300,
     )
     algorithm_result, plot_data = tabu_search_algorithm.objective_function()
     return tabu_search_algorithm, algorithm_result, plot_data
