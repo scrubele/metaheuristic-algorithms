@@ -17,7 +17,6 @@ class NeighbourhoodGenerationStrategy(Enum):
                     neighbour_solutions.append(current_neighbour)
                 else:
                     pass
-                # print("current_neighbour", current_neighbour)
         return neighbour_solutions
 
     def generate_linear_swap_neighbours(self, initial_solution, frozen_values, should_pick_values=None):
@@ -29,7 +28,6 @@ class NeighbourhoodGenerationStrategy(Enum):
                     neighbour_solutions.append(current_neighbour)
                 else:
                     pass
-                # print("current_neighbour", current_neighbour)
         return neighbour_solutions
 
     def generate_swap_neighbours(self, initial_solution, frozen_values, should_pick_values=None):
@@ -44,11 +42,7 @@ class NeighbourhoodGenerationStrategy(Enum):
                     neighbour_solutions.append(current_neighbour)
                 else:
                     pass
-                    # print("yes", (swap_first, swap_last))
-                # print("current_neighbour", current_neighbour)
-            # print("current", len(neighbour_solutions))
         else:
-            # print(should_pick_values)
             for swap_first_position, swap_first in should_pick_values:
                 current_neighbour = initial_solution.set_value(swap_first_position, swap_first)
                 if current_neighbour is not None:
@@ -56,7 +50,6 @@ class NeighbourhoodGenerationStrategy(Enum):
         return neighbour_solutions
 
     def generate_neighbours(self, initial_solution, frozen_values, should_pick_values=None):
-        # print(self.value)
         if self.value == NeighbourhoodGenerationStrategy.SWAP.value:
             return self.generate_swap_neighbours(initial_solution, frozen_values, should_pick_values)
         elif self.value == NeighbourhoodGenerationStrategy.LINEAR_SWAP.value:

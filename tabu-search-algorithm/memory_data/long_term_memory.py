@@ -8,6 +8,7 @@ class Diversification(Memory):
 
     def __init__(self, size, threshold_number, pick_number=3, criteria_threshold_value=0, criteria=MemoryCriteria):
         super().__init__(size, threshold_value=criteria_threshold_value, criteria=criteria)
+        self.matrix = self.initialize_matrix()
         self.threshold_number = threshold_number
         self.pick_number = pick_number
         self.should_pick_values = {}
@@ -25,6 +26,7 @@ class Diversification(Memory):
             self.matrix[value][value_position] += 1
             self.matrix[value_position][value] += 1
             self.hidden_list[value_position] = (value, self.matrix[value][value_position])
+            # print(value, value_position, self.matrix[value][value_position], "diversification")
 
     def add(self, solution):
         picked_value = self.memory_strategy.pick(solution=solution)

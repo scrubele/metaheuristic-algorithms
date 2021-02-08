@@ -6,14 +6,16 @@ class Intensification(Memory):
 
     def __init__(self, size, criteria_threshold_value=50, criteria=MemoryCriteria):
         super().__init__(size, criteria_threshold_value, criteria)
+        self.matrix = self.initialize_matrix()
 
     def __add(self, pairs):
         for value, value_position in pairs:
             # print("value", value, "value_position", value_position, "previous", self.matrix[value][value_position])
             self.matrix[value][value_position] += 1
             self.matrix[value_position][value] += 1
-            self.is_criteria(self.frozen_values, number=self.matrix[value][value_position],
-                             value_pair=(value, value_position))
+            is_criteria = self.is_criteria(self.frozen_values, number=self.matrix[value][value_position],
+                                           value_pair=(value, value_position))
+            # print(value, value_position, self.matrix[value][value_position], is_criteria)
 
     def add(self, solution):
         picked_value = self.memory_strategy.pick(solution=solution)

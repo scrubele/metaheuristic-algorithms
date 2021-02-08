@@ -20,7 +20,7 @@ class MemoryStrategy(Enum):
             return first_value, last_value
         elif self.value == self.SAVE_VALUE_POSITIONS.value:
             positions = solution.swap
+            # print(solution.encoding)
             city_1 = solution.encoding[positions[0]]
             city_2 = solution.encoding[positions[1]]
             return ((city_1, positions[0]), (city_2, positions[1]))
-

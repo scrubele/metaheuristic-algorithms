@@ -49,7 +49,7 @@ class TabuSearchAlgorithm:
 
             if self.aspiration_criteria.is_satisfied(best_admissible_solution, self.best_solution):
                 self.best_solution = best_admissible_solution
-                self.long_term_memory.unsuccess_iterations = current_iteration/100
+                self.long_term_memory.unsuccess_iterations = current_iteration / 100
             else:
                 # print("Not improving iteration: ", self.long_term_memory.unsuccess_iterations)
                 self.long_term_memory.unsuccess_iterations += 1
@@ -57,6 +57,7 @@ class TabuSearchAlgorithm:
             self.short_term_memory.add(solution=best_admissible_solution)
             # print('TabuQueue: ', self.short_term_memory.queue)
             current_solution = best_admissible_solution
+            # print(current_solution, self.best_solution)
             self.middle_term_memory.add(solution=self.best_solution)
             # print("Frozen values: ", self.middle_term_memory.frozen_values)
             self.long_term_memory.add(solution=current_solution)
@@ -64,6 +65,8 @@ class TabuSearchAlgorithm:
             self.long_term_memory.run()
             result_plot_list.append(current_solution)
             current_iteration += 1
+        # print(self.middle_term_memory)
+        # print(self.long_term_memory)
         return self.best_solution, result_plot_list
 
     def find_best_neighbour(self, current_solution):
