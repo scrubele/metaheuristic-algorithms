@@ -1,0 +1,2 @@
+class TravelerSalesmanProblemSolution(object):
+    pass
