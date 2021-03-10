@@ -1,6 +1,6 @@
 from strategies.memory_strategies import MemoryStrategy
 from tabu_search_algorithm import TabuSearchAlgorithm
-from utilities import read_from_resources, plot_matrix, plot_solutions, plot_scatter, find_statistic_properties
+from utilities import read_from_resources, plot_matrix, plot_solutions, find_statistic_properties
 
 DEBUG = False
 
@@ -37,7 +37,6 @@ def run_algorithm_with_analytics():
     import time
     start_time = time.time()
     tabu_search_algorithm, algorithm_result, plot_data = run_algorithm()
-    print("Algorithm result:", algorithm_result)
     print("--- %s seconds ---" % (time.time() - start_time))
     run_analytics(tabu_search_algorithm, algorithm_result, plot_data)
 
@@ -65,7 +64,7 @@ def run_algorithm_multiple_times(max_iterations=5, best_value=33523):
 
 if __name__ == "__main__":
     file_names = ["att48.33523.tsp", "at42.699.tsp"]
-    weights = read_from_resources(file_names[0])
+    weights = read_from_resources(file_names[1])
     print(weights)
-    # run_algorithm_with_analytics()
-    run_algorithm_multiple_times()
+    run_algorithm_with_analytics()
+    # run_algorithm_multiple_times()

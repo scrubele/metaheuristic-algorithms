@@ -6,7 +6,7 @@ from memory_data.long_term_memory import Diversification
 from memory_data.middle_term_memory import Intensification
 from memory_data.short_term_memory import TabuQueue, MemoryStrategy
 from solutions.locators import SolutionNeighbourLocator
-from solutions.solutions import TravelerSalesmanProblemSolution
+from solutions.tsp_solution import TravellingSalesmanProblemSolution
 
 DEBUG = True
 
@@ -23,7 +23,7 @@ class TabuSearchAlgorithm:
                  intensification_pick_number=3,
                  max_iterations=600,
                  optimization=OptimizationStrategy.MINIMIZATION,
-                 solution_class=TravelerSalesmanProblemSolution,
+                 solution_class=TravellingSalesmanProblemSolution,
                  neighbour_locator=SolutionNeighbourLocator,
                  stopping_criteria=IterationStopCriteria,
                  aspiration_criteria=AspirationCriteria):
@@ -50,7 +50,7 @@ class TabuSearchAlgorithm:
         self.long_term_memory.alpha = 0.09*current_solution.value
         current_iteration = 0
         while self.stopping_criteria.is_satisfied(current_iteration):
-            # print("iteration:", current_iteration, "\tsolution:", current_solution)
+            print("iteration:", current_iteration, "\tsolution:", current_solution)
             # print("self.long_term_memory.alpha", self.long_term_memory.alpha)
             best_admissible_solution = self.find_best_neighbour(current_solution=current_solution)
 
